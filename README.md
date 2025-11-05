@@ -11,7 +11,27 @@ VietASR is a training pipeline designed for low resource ASR. It uses ASR-biased
 ![](images/pipeline.png)
 
 ## Environment
-This repo relies on [lhotse](https://github.com/lhotse-speech/lhotse) for data pretreatment and uses [icefall](https://github.com/k2-fsa/icefall) as the framework. For the steps to install these two dependencies, please refer to [icefall install tutorial](https://k2-fsa.github.io/icefall/installation/index.html). Make sure to run the following command in your terminal before running any script in this repo. When you run this command, the icefall_path should be replaced with the path to your icefall repository.
+This repo relies on [lhotse](https://github.com/lhotse-speech/lhotse) for data pretreatment and uses [icefall](https://github.com/k2-fsa/icefall) as the framework. For the steps to install these two dependencies, please refer to [icefall install tutorial](https://k2-fsa.github.io/icefall/installation/index.html). 
+
+### Installing K2 with uv
+You can install K2 and dependencies using uv:
+
+```bash
+# Create new venv with Python 3.11 using uv
+uv venv --python 3.11 vo-pytorch2.0
+source vo-pytorch2.0/bin/activate
+
+# Install PyTorch 2.0.1 (CPU version)
+uv pip install torch==2.0.1 --extra-index-url https://download.pytorch.org/whl/cpu
+
+# Install K2
+uv pip install k2==1.24.3.dev20230719+cpu.torch2.0.1 --find-links https://k2-fsa.github.io/k2/cpu.html
+```
+
+For GPU version, replace `cpu` with `cu118` (CUDA 11.8) or appropriate CUDA version in both commands.
+
+### Setup
+Make sure to run the following command in your terminal before running any script in this repo. When you run this command, the icefall_path should be replaced with the path to your icefall repository.
  ```bash
  export PYTHONPATH=icefall_path:$PYTHONPATH
  ```

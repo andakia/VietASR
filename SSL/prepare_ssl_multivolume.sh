@@ -16,9 +16,9 @@ stop_stage=5
 # Configuration for multi-volume data
 volume_prefix="/mnt/pr_audio"
 start_volume=1
-end_volume=20
+end_volume=1
 subset_name="train_multivolume"
-lang=Vietnam
+lang=Wolof
 num_per_split=200000
 
 # Directories

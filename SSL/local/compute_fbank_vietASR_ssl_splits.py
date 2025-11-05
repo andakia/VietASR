@@ -58,14 +58,14 @@ def get_parser():
     parser.add_argument(
         "--num-workers",
         type=int,
-        default=20,
+        default=32,
         help="Number of dataloading workers used for reading the audio.",
     )
 
     parser.add_argument(
         "--batch-duration",
         type=float,
-        default=600.0,
+        default=3000.0,
         help="The maximum number of audio seconds in a batch."
         "Determines batch size dynamically.",
     )
@@ -220,7 +220,7 @@ def run(src_dir, dataset, index, lock_file_name):
 
     print(f"task {src_dir} {dataset} {index} using device {device}")
     state = os.system(
-        f"CUDA_VISIBLE_DEVICES={device} PYTHONUTF8=1 python3 ./local/compute_fbank_vietASR_ssl_splits.py run --src-dir {src_dir} --dataset {dataset} --num-workers 2 --start {index} --stop {index+1} --batch-duration 1000 --num-splits {index+1} 2>&1 | tee log_tem/{dataset}_{index}.log"
+        f"CUDA_VISIBLE_DEVICES={device} PYTHONUTF8=1 python3 ./local/compute_fbank_vietASR_ssl_splits.py run --src-dir {src_dir} --dataset {dataset} --num-workers 32 --start {index} --stop {index+1} --batch-duration 3000 --num-splits {index+1} 2>&1 | tee log_tem/{dataset}_{index}.log"
     )
     # state = 0
     with device_lock:
