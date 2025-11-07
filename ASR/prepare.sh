@@ -61,7 +61,7 @@ if [ $stage -le 1 ] && [ $stop_stage -ge 1 ]; then
   # to $dl_dir/supervised
   mkdir -p data/manifests
   if [ ! -e data/manifests/.supervised.done ]; then
-    python local/prepare_manifest.py --num-jobs $nj --corpus-dir $dl_dir --output-dir data/manifests --language vietnamese
+    python local/prepare_manifest.py --num-jobs $nj --corpus-dir $dl_dir --output-dir data/manifests --language wolof
     touch data/manifests/.supervised.done
   fi
 fi
