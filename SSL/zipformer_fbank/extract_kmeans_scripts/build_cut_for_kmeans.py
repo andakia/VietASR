@@ -15,9 +15,9 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--target-path",
-        type=float,
-        default=100,
-        help="Duration for target cut in hours",
+        type=str,
+        default="data/kmeans_manifest_100h.jsonl.gz",
+        help="Destination path for the subset manifest (JSONL.GZ).",
     )
 
     args = parser.parse_args()
@@ -30,7 +30,7 @@ if __name__ == "__main__":
 
     target_lines = []
     total_duration = 0
-    for i, index in range(num_splits):
+    for i in range(num_splits):
         idx = f"{i}".zfill(num_digits)
         cuts_path = os.path.join(
             src_dir, f"vietASR-ssl_cuts_{subset_name}.{idx}.jsonl.gz"
