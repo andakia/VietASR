@@ -128,7 +128,19 @@ def parse_utterance(
     line: str,
     language: str,
 ) -> Optional[Tuple[Recording, SupervisionSegment]]:
-    recording_id, text = line.strip().split(maxsplit=1)
+    line = line.strip()
+    if not line:
+        logging.warning(f"Empty transcript line in {script_path}")
+        return None
+
+    parts = line.split(maxsplit=1)
+    if len(parts) != 2:
+        logging.warning(
+            f"Malformed transcript entry in {script_path}: {line!r}"
+        )
+        return None
+
+    recording_id, text = parts
     # Create the Recording first
     audio_path = script_path.parent / f"{recording_id}.wav"
     if not audio_path.is_file():
