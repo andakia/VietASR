@@ -450,9 +450,15 @@ class AsrDataModule:
         )
 
     @lru_cache()
-    def dev_cuts(self) -> CutSet:
+    def dev_cuts(self) -> Optional[CutSet]:
         logging.info("About to get dev cuts")
-        return load_manifest_lazy(self.args.manifest_dir / "vietASR_cuts_dev.jsonl.gz")
+        dev_path = self.args.manifest_dir / "vietASR_cuts_dev.jsonl.gz"
+        if not dev_path.is_file():
+            logging.warning(
+                "Validation manifest %s not found; validation will be skipped.", dev_path
+            )
+            return None
+        return load_manifest_lazy(dev_path)
 
     @lru_cache()
     def test_cuts(self) -> CutSet:
