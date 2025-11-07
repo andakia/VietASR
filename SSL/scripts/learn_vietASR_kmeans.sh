@@ -26,6 +26,6 @@ python -m zipformer_fbank.extract_kmeans_scripts.learn_kmeans \
     --epoch 20 \
     --avg 1 \
     --max-duration 1000 \
-    --checkpoint-type finetune \
+    --checkpoint-type ASR \
     --use-averaged-model 1 \
-    --bpe-model data/ssl_finetune/Vietnam_bpe_2000_new/bpe.model
+    --bpe-model /mnt/training/VietASR/ASR/data/lang_bpe_2000/bpe.model
