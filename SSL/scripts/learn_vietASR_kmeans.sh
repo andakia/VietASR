@@ -22,8 +22,8 @@ python -m zipformer_fbank.extract_kmeans_scripts.learn_kmeans \
     --max-iter 100 \
     --files data/kmeans_manifest_100h.jsonl.gz \
     --do-training \
-    --pretrained-dir zipformer_fbank/exp-kmeans_ASR_50h-all/exp-epoch-3-tri-stage-50h \
-    --epoch 195 \
+    --pretrained-dir /mnt/training/VietASR/ASR/zipformer/exp \
+    --epoch 20 \
     --avg 1 \
     --max-duration 1000 \
     --checkpoint-type finetune \
