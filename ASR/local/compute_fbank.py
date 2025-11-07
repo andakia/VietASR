@@ -79,6 +79,7 @@ def compute_fbank(
     output_dir = Path("data/fbank")
     num_jobs = min(15, os.cpu_count())
     num_mel_bins = 80
+    target_sample_rate = 16000
 
     if bpe_model:
         logging.info(f"Loading {bpe_model}")
@@ -125,7 +126,12 @@ def compute_fbank(
                 f"Missing manifests for requested dataset parts: {', '.join(missing_parts)}"
             )
 
-    extractor = Fbank(FbankConfig(num_mel_bins=num_mel_bins))
+    extractor = Fbank(
+        FbankConfig(
+            num_mel_bins=num_mel_bins,
+            sampling_rate=target_sample_rate,
+        )
+    )
 
     with get_executor() as ex:  # Initialize the executor only once.
         for partition, m in manifests.items():
@@ -138,6 +144,16 @@ def compute_fbank(
                 recordings=m["recordings"],
                 supervisions=m["supervisions"],
             )
+
+            recordings_sample_rates = {r.sampling_rate for r in m["recordings"]}
+            if recordings_sample_rates != {target_sample_rate}:
+                logging.info(
+                    "Resampling %s recordings from %s Hz to %s Hz",
+                    partition,
+                    ", ".join(str(sr) for sr in sorted(recordings_sample_rates)),
+                    target_sample_rate,
+                )
+                cut_set = cut_set.resample(target_sample_rate)
 
             if "train" in partition:
                 if bpe_model:
