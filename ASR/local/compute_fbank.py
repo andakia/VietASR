@@ -86,11 +86,11 @@ def compute_fbank(
         sp.load(bpe_model)
 
     if dataset is None:
-        dataset_parts = (
+        dataset_parts = [
             "dev",
             "test",
             "train",
-        )
+        ]
     else:
         dataset_parts = dataset.split(" ", -1)
 
@@ -102,14 +102,28 @@ def compute_fbank(
         prefix=prefix,
         suffix=suffix,
     )
-    assert manifests is not None
+    if manifests is None:
+        raise ValueError(
+            f"No manifests found in {src_dir} with prefix {prefix} and suffix {suffix}"
+        )
 
-    assert len(manifests) == len(dataset_parts), (
-        len(manifests),
-        len(dataset_parts),
-        list(manifests.keys()),
-        dataset_parts,
-    )
+    if dataset is None:
+        missing_parts = [part for part in dataset_parts if part not in manifests]
+        if missing_parts:
+            logging.warning(
+                "Skipping dataset parts without manifests: %s", ", ".join(missing_parts)
+            )
+        dataset_parts = [part for part in dataset_parts if part in manifests]
+        if not dataset_parts:
+            raise ValueError(
+                f"No manifests available in {src_dir}; expected at least one of dev/test/train."
+            )
+    else:
+        missing_parts = [part for part in dataset_parts if part not in manifests]
+        if missing_parts:
+            raise ValueError(
+                f"Missing manifests for requested dataset parts: {', '.join(missing_parts)}"
+            )
 
     extractor = Fbank(FbankConfig(num_mel_bins=num_mel_bins))
 
