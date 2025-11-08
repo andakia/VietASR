@@ -47,6 +47,7 @@ import argparse
 import copy
 import logging
 import os
+import pathlib
 import warnings
 from collections import OrderedDict
 from pathlib import Path
@@ -90,6 +91,11 @@ from torch.cuda.amp import GradScaler
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.tensorboard import SummaryWriter
 from tri_scheduler import TriStageLRSchedule
+
+try:
+    torch.serialization.add_safe_globals([pathlib.PosixPath])
+except AttributeError:
+    pass
 
 LRSchedulerType = Union[torch.optim.lr_scheduler._LRScheduler, optim.LRScheduler]
 
