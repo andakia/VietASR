@@ -57,6 +57,8 @@ class _SeedWorkers:
 
 def map_function(old_prefix, new_prefix):
     def f(cut):
+        if cut.features is None:
+            return cut
         old_path = cut.features.storage_path
         assert old_path.startswith(old_prefix), f"{cut.id} has feature path {old_path}"
         cut.features.storage_path = new_prefix + old_path[len(old_prefix) :]
@@ -82,6 +84,34 @@ class FinetuneAsrDataModule:
 
     def __init__(self, args: argparse.Namespace):
         self.args = args
+        if (
+            getattr(self.args, "feature_storage_dir", None) is None
+            and getattr(self.args, "manifest_dir", None) is not None
+            and self.args.manifest_dir != Path("data/fbank")
+        ):
+            self.args.feature_storage_dir = self.args.manifest_dir
+
+    def _maybe_remap_features(self, cuts: CutSet) -> CutSet:
+        feature_dir = getattr(self.args, "feature_storage_dir", None)
+        if feature_dir is None:
+            return cuts
+
+        old_prefix = getattr(self.args, "feature_storage_prefix", None)
+        if not old_prefix:
+            return cuts
+
+        new_prefix = str(feature_dir)
+        old_prefix = str(old_prefix)
+
+        if old_prefix == new_prefix:
+            return cuts
+
+        logging.info(
+            "Remapping feature storage from prefix '%s' to '%s'.",
+            old_prefix,
+            new_prefix,
+        )
+        return cuts.map(map_function(old_prefix, new_prefix))
 
     @classmethod
     def add_arguments(cls, parser: argparse.ArgumentParser):
@@ -193,6 +223,18 @@ class FinetuneAsrDataModule:
             type=str,
             default="PrecomputedFeatures",
             help="AudioSamples or PrecomputedFeatures",
+        )
+        group.add_argument(
+            "--feature-storage-prefix",
+            type=str,
+            default="data/fbank",
+            help="Prefix in feature manifests that should be replaced when opening feature files.",
+        )
+        group.add_argument(
+            "--feature-storage-dir",
+            type=Path,
+            default=None,
+            help="If set, replace feature-storage-prefix with this directory so feature files can be found.",
         )
 
     def train_dataloaders_k2(
@@ -610,9 +652,10 @@ class FinetuneAsrDataModule:
     @lru_cache()
     def train_cuts(self) -> CutSet:
         logging.info("About to get train cuts")
-        return load_manifest_lazy(
+        cuts = load_manifest_lazy(
             self.args.manifest_dir / "vietASR_cuts_train.jsonl.gz"
         )
+        return self._maybe_remap_features(cuts)
 
     @lru_cache()
     def dev_cuts(self) -> Optional[CutSet]:
@@ -624,9 +667,11 @@ class FinetuneAsrDataModule:
                 manifest_path,
             )
             return None
-        return load_manifest_lazy(manifest_path)
+        cuts = load_manifest_lazy(manifest_path)
+        return self._maybe_remap_features(cuts)
 
     @lru_cache()
     def test_cuts(self) -> CutSet:
         logging.info("About to get test cuts")
-        return load_manifest_lazy(self.args.manifest_dir / "vietASR_cuts_test.jsonl.gz")
+        cuts = load_manifest_lazy(self.args.manifest_dir / "vietASR_cuts_test.jsonl.gz")
+        return self._maybe_remap_features(cuts)
