@@ -958,7 +958,7 @@ def train_one_epoch(
     optimizer: torch.optim.Optimizer,
     scheduler: LRSchedulerType,
     train_dl: torch.utils.data.DataLoader,
-    valid_dl: torch.utils.data.DataLoader,
+    valid_dl: Optional[torch.utils.data.DataLoader],
     scaler: GradScaler,
     model_avg: Optional[nn.Module] = None,
     tb_writer: Optional[SummaryWriter] = None,
@@ -983,7 +983,7 @@ def train_one_epoch(
       train_dl:
         Dataloader for the training dataset.
       valid_dl:
-        Dataloader for the validation dataset.
+        Dataloader for the validation dataset. Can be ``None`` to skip validation.
       scaler:
         The scaler used for mix precision training.
       model_avg:
@@ -1135,7 +1135,11 @@ def train_one_epoch(
                         "train/grad_scale", cur_grad_scale, params.batch_idx_train
                     )
 
-        if batch_idx % params.valid_interval == 0 and not params.print_diagnostics:
+        if (
+            valid_dl is not None
+            and batch_idx % params.valid_interval == 0
+            and not params.print_diagnostics
+        ):
             logging.info("Computing validation loss")
             valid_info = compute_validation_loss(
                 params=params,
@@ -1300,16 +1304,17 @@ def run(rank, world_size, args):
     valid_cuts = pretraining.dev_cuts_vi_ssl(suffix="_" + args.label_type)
     if len(valid_cuts) == 0:
         logging.warning("No dev cuts found; skipping validation phase for this epoch.")
+        valid_dl = None
+    else:
+        valid_cuts = valid_cuts.filter(remove_short_and_long_utt_and_special_channel)
 
-    valid_cuts = valid_cuts.filter(remove_short_and_long_utt_and_special_channel)
-
-    valid_dl = pretraining.valid_dataloaders(
-        valid_cuts,
-        max_sample_size=params.max_sample_size,
-        sample_rate=params.sample_rate,
-        label_rate=params.label_rate,
-        num_classes=params.num_classes,
-    )
+        valid_dl = pretraining.valid_dataloaders(
+            valid_cuts,
+            max_sample_size=params.max_sample_size,
+            sample_rate=params.sample_rate,
+            label_rate=params.label_rate,
+            num_classes=params.num_classes,
+        )
 
     # if params.sanity_check and not params.print_diagnostics:
     #     scan_pessimistic_batches_for_oom(
