@@ -99,6 +99,27 @@ src_cut_path2 target_cut_path2
 ```
 src_cut_path is the path for unsupervised manifest, for example, ```data/ssl_data/data_split/vietASR-ssl_cuts_data.00000001.jsonl.gz```, and for target path, an extra label type is necessary to distinguish label of different iterations, so the `target_cut_path` should be like ```data/ssl_data/data_split/vietASR-ssl_cuts_data_iter1.00000001.jsonl.gz```
 
+If you followed `prepare_ssl_multivolume.sh`, you can generate the task list automatically (update the paths when needed):
+```bash
+cd SSL
+python - <<'PY'
+import glob, os
+
+src_dir = "data/ssl_train_multivolume/train_multivolume_split"
+task_lines = []
+
+for src in sorted(glob.glob(f"{src_dir}/vietASR-ssl_cuts_train_multivolume.*.jsonl.gz")):
+    tgt = src.replace(".jsonl.gz", ".kmeans.jsonl.gz")
+    task_lines.append(f"{src} {tgt}")
+
+out_path = f"{src_dir}/kmeans_task_list.txt"
+with open(out_path, "w") as f:
+    f.write("\n".join(task_lines) + "\n")
+
+print(f"Wrote {len(task_lines)} entries to {out_path}")
+PY
+```
+
 Modify ```SSL/scripts/extract_vietASR_kmeans.sh```, and then run
 ```bash
 cd SSL
