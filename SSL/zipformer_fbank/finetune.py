@@ -1183,10 +1183,14 @@ def compute_validation_loss(
     params: AttributeDict,
     model: Union[nn.Module, DDP],
     sp: spm.SentencePieceProcessor,
-    valid_dl: torch.utils.data.DataLoader,
+    valid_dl: Optional[torch.utils.data.DataLoader],
     world_size: int = 1,
 ) -> MetricsTracker:
     """Run the validation process."""
+    if valid_dl is None:
+        logging.info("Skipping validation loss computation (no dev dataloader).")
+        return MetricsTracker()
+
     model.eval()
 
     tot_loss = MetricsTracker()
@@ -1220,7 +1224,7 @@ def train_one_epoch(
     scheduler: LRSchedulerType,
     sp: spm.SentencePieceProcessor,
     train_dl: torch.utils.data.DataLoader,
-    valid_dl: torch.utils.data.DataLoader,
+    valid_dl: Optional[torch.utils.data.DataLoader],
     scaler: GradScaler,
     model_avg: Optional[nn.Module] = None,
     tb_writer: Optional[SummaryWriter] = None,
@@ -1245,7 +1249,7 @@ def train_one_epoch(
       train_dl:
         Dataloader for the training dataset.
       valid_dl:
-        Dataloader for the validation dataset.
+        Dataloader for the validation dataset. If None, validation is skipped.
       scaler:
         The scaler used for mix precision training.
       model_avg:
@@ -1410,7 +1414,11 @@ def train_one_epoch(
                         "train/grad_scale", cur_grad_scale, params.batch_idx_train
                     )
 
-        if batch_idx % params.valid_interval == 0 and not params.print_diagnostics:
+        if (
+            valid_dl is not None
+            and batch_idx % params.valid_interval == 0
+            and not params.print_diagnostics
+        ):
             logging.info("Computing validation loss")
             valid_info = compute_validation_loss(
                 params=params,
@@ -1601,9 +1609,11 @@ def run(rank, world_size, args):
         train_cuts,
         sampler_state_dict=sampler_state_dict,
     )
-    valid_dl = finetune_datamoddule.valid_dataloaders(
-        valid_cuts,
-    )
+    if valid_cuts is not None:
+        valid_dl = finetune_datamoddule.valid_dataloaders(valid_cuts)
+    else:
+        logging.warning("Validation dataset is unavailable; proceeding without dev dataloader.")
+        valid_dl = None
 
     if params.sanity_check and not params.print_diagnostics:
         scan_pessimistic_batches_for_oom(

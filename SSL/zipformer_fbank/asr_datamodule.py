@@ -506,7 +506,10 @@ class FinetuneAsrDataModule:
 
         return train_dl
 
-    def valid_dataloaders(self, cuts_valid: CutSet) -> DataLoader:
+    def valid_dataloaders(self, cuts_valid: Optional[CutSet]) -> Optional[DataLoader]:
+        if cuts_valid is None:
+            logging.warning("No dev cuts available; skipping dev dataloader creation.")
+            return None
         logging.info("About to create dev dataset")
         validate = HubertAsrDataset()
         valid_sampler = DynamicBucketingSampler(
@@ -525,7 +528,10 @@ class FinetuneAsrDataModule:
 
         return valid_dl
 
-    def valid_dataloaders_k2(self, cuts_valid: CutSet) -> DataLoader:
+    def valid_dataloaders_k2(self, cuts_valid: Optional[CutSet]) -> Optional[DataLoader]:
+        if cuts_valid is None:
+            logging.warning("No dev cuts available; skipping k2 dev dataloader creation.")
+            return None
         transforms = []
         if self.args.concatenate_cuts:
             transforms = [
@@ -609,9 +615,16 @@ class FinetuneAsrDataModule:
         )
 
     @lru_cache()
-    def dev_cuts(self) -> CutSet:
+    def dev_cuts(self) -> Optional[CutSet]:
         logging.info("About to get dev cuts")
-        return load_manifest_lazy(self.args.manifest_dir / "vietASR_cuts_dev.jsonl.gz")
+        manifest_path = self.args.manifest_dir / "vietASR_cuts_dev.jsonl.gz"
+        if not manifest_path.exists():
+            logging.warning(
+                "Dev manifest %s not found; validation will be skipped.",
+                manifest_path,
+            )
+            return None
+        return load_manifest_lazy(manifest_path)
 
     @lru_cache()
     def test_cuts(self) -> CutSet:
