@@ -1298,6 +1298,8 @@ def run(rank, world_size, args):
     )
 
     valid_cuts = pretraining.dev_cuts_vi_ssl(suffix="_" + args.label_type)
+    if len(valid_cuts) == 0:
+        logging.warning("No dev cuts found; skipping validation phase for this epoch.")
 
     valid_cuts = valid_cuts.filter(remove_short_and_long_utt_and_special_channel)
 

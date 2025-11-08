@@ -270,6 +270,9 @@ class VietASRDataModule:
         pool_name = "dev"
         split_name = f"{pool_name}_split"
         split_path = os.path.join(self.args.manifest_dir, pool, split_name)
+        if not os.path.isdir(split_path):
+            logging.warning(f"Dev split directory {split_path} not found; returning empty CutSet.")
+            return CutSet()
         split_list = os.listdir(split_path)
         pattern = re.compile(
             "vietASR-ssl_cuts_" + pool_name + suffix + r".([0-9]+).jsonl.gz"
@@ -282,6 +285,12 @@ class VietASRDataModule:
         cut_lis.extend(split_list)
         # cut_lis = sorted(cut_lis)[1:]
         cut_lis = sorted(cut_lis)
+        if len(cut_lis) == 0:
+            logging.warning(
+                "No dev splits matched; returning empty CutSet. "
+                "Ensure dev manifests exist or disable validation."
+            )
+            return CutSet()
         # sorted_filenames = [f[1] for f in idx_filenames]
         logging.info(f"Loading {len(cut_lis)} splits in lazy mode")
 

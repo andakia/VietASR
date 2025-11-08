@@ -6,7 +6,7 @@ export CUDA_VISIBLE_DEVICES=0,1,2,3
 # change --exp-dir to the path you want to save checkpoints
 
 python zipformer_fbank/pretrain.py \
-    --world-size 8 \
+    --world-size 4 \
     --num-epochs 20 \
     --start-epoch 1 \
     --use-fp16 1 \
