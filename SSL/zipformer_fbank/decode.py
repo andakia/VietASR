@@ -1025,11 +1025,18 @@ def main():
         test_sets.append("dev")
         test_cuts_lis.append(finetune_datamoddule.dev_cuts())
 
-    test_dl = [
-        finetune_datamoddule.test_dataloaders(test_cuts) for test_cuts in test_cuts_lis
-    ]
+    test_dl_list = []
+    filtered_test_sets = []
+    for test_set, test_cuts in zip(test_sets, test_cuts_lis):
+        if test_cuts is None:
+            logging.warning(
+                "No cuts available for %s; skipping dataloader creation.", test_set
+            )
+            continue
+        test_dl_list.append(finetune_datamoddule.test_dataloaders(test_cuts))
+        filtered_test_sets.append(test_set)
 
-    for test_set, test_dl in zip(test_sets, test_dl):
+    for test_set, test_dl in zip(filtered_test_sets, test_dl_list):
         results_dict = decode_dataset(
             dl=test_dl,
             params=params,
